@@ -1,0 +1,37 @@
+CREATE TABLE IF NOT EXISTS users (
+  id SERIAL PRIMARY KEY,
+  username VARCHAR(128) UNIQUE NOT NULL,
+  password_hash VARCHAR(255) NOT NULL,
+  role VARCHAR(32) NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS access_requests (
+  id SERIAL PRIMARY KEY,
+  teleport_request_id VARCHAR(255) UNIQUE NOT NULL,
+  username VARCHAR(128) NOT NULL,
+  resource VARCHAR(255) NOT NULL,
+  role_requested VARCHAR(128) NOT NULL,
+  reason TEXT NOT NULL,
+  ticket_id VARCHAR(64) NOT NULL,
+  status VARCHAR(32) NOT NULL,
+  created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+  approved_at TIMESTAMP NULL,
+  session_start TIMESTAMP NULL,
+  session_end TIMESTAMP NULL,
+  commands_executed TEXT NULL
+);
+
+CREATE TABLE IF NOT EXISTS approvals (
+  id SERIAL PRIMARY KEY,
+  request_id INTEGER NOT NULL REFERENCES access_requests(id) ON DELETE CASCADE,
+  approver VARCHAR(128) NOT NULL,
+  approved_at TIMESTAMP NOT NULL DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS audit_logs (
+  id SERIAL PRIMARY KEY,
+  actor VARCHAR(128) NOT NULL,
+  action VARCHAR(128) NOT NULL,
+  details TEXT,
+  created_at TIMESTAMP NOT NULL DEFAULT NOW()
+);

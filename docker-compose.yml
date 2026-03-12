@@ -1,0 +1,44 @@
+version: '3.9'
+services:
+  postgres:
+    image: postgres:16
+    environment:
+      POSTGRES_DB: pam
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./schema.sql:/docker-entrypoint-initdb.d/schema.sql
+
+  portal-backend:
+    build: ./backend
+    env_file:
+      - .env
+    environment:
+      DATABASE_URL: postgresql://postgres:postgres@postgres:5432/pam
+      PORTAL_BASE_URL: http://localhost:5173
+    ports:
+      - "8000:8000"
+    depends_on:
+      - postgres
+    volumes:
+      # Teleport user/session state (must exist on host)
+      - ~/.tsh:/root/.tsh
+      - ~/.tctl:/root/.tctl
+      # Teleport CLIs from host (required by backend subprocess calls)
+      - /usr/local/bin/tsh:/usr/local/bin/tsh:ro
+      - /usr/local/bin/tctl:/usr/local/bin/tctl:ro
+
+  portal-frontend:
+    build: ./frontend
+    environment:
+      VITE_API_URL: http://localhost:8000
+    ports:
+      - "5173:5173"
+    depends_on:
+      - portal-backend
+
+volumes:
+  pgdata:
